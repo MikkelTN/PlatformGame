@@ -1,8 +1,12 @@
 /** Styling the game field **/
+body {
+	padding: 0;
+	margin: 0;
+}
 .game {
+  max-height: 100vh;
+  max-width: 100%;
   overflow: hidden;
-  max-width: 600px;
-  max-height: 450px;
   position: relative;
 }
 .background {
