@@ -1,5 +1,20 @@
-var simpleLevelPlan = [
+const levelPlan = [
   "                      ",
+  "  o  o                ",
+  " xxxxxx               ",
+  "                      ",
+  "            xxxx      ",
+  "                      ",
+  "     xx               ",
+  "                      ",
+  "                      ",
+  "        xx            ",
+  "                      ",
+  "             xxxxx    ",
+  "                      ",
+  "                      ",
+  "                      ",
+  "      xxxxx           ",
   "                      ",
   "  x              = x  ",
   "  x         o o    x  ",
@@ -7,7 +22,7 @@ var simpleLevelPlan = [
   "  xxxxx            x  ",
   "      xwwwwwwwwwwwwx  ",
   "      xxxxxxxxxxxxxx  ",
-  "                      "
+  "wwwwwwwwwwwwwwwwwwwwww"
 ];
 
 //Build the level from the levelplan
@@ -17,9 +32,9 @@ function Level(plan) {
   this.grid = [];
   this.elements = [];
   
-  for(let y = 0; y < this.height; y++) {
+  for(y = 0; y < this.height; y++) {
     const line = plan[y], gridLine = [];
-    for(let x = 0; x < this.width; x++) {
+    for(x = 0; x < this.width; x++) {
       let ch = line[x], fieldType = null;
       const Element = elementChars[ch];
       if(Element)
@@ -33,9 +48,7 @@ function Level(plan) {
     this.grid.push(gridLine);
   }
 
-  this.player = this.elements.filter(function(elm) {
-    return elm.type == "player";
-  })[0];
+  this.player = this.elements.filter(elm => elm.type == "player")[0];
   this.status = this.finishDelay = null;
 }
 
@@ -89,7 +102,7 @@ function Coin(pos) {
 }
 Coin.prototype.type = "coin";
 
-//For displaying the game I need some html elements
+//For displaying the game I need a quick way of inserting html elements
 function elt(name, className) {
   const elt = document.createElement(name);
   if(className)
@@ -107,24 +120,22 @@ function DOMDisplay(parent, level) {
 }
 
 //Functions for drawing the game and the actors
-var scale = 20;
+const scale = Math.floor(Math.min(window.innerWidth, window.innerHeight) / 10);
 
 DOMDisplay.prototype.drawBackground = function() {
   const table = elt("table", "background");
   table.style.width = this.level.width * scale + "px";
-  this.level.grid.forEach(function(row) {
+  this.level.grid.forEach(row => {
     const rowElt = table.appendChild(elt("tr"));
     rowElt.style.height = scale + "px";
-    row.forEach(function(type) {
-      rowElt.appendChild(elt("td", type));
-    });
+    row.forEach(type => rowElt.appendChild(elt("td", type)));
   });
   return table;
 };
 
 DOMDisplay.prototype.drawElements = function() {
   const wrap = elt("div");
-  this.level.elements.forEach(function(elm) {
+  this.level.elements.forEach(elm => {
     const rect = wrap.appendChild(elt("div", "element " + elm.type));
     rect.style.width = elm.size.x * scale + "px";
     rect.style.height = elm.size.y * scale + "px";
@@ -143,16 +154,16 @@ DOMDisplay.prototype.drawFrame = function() {
 };
 
 DOMDisplay.prototype.scrollPlayerIntoView = function() {
-  const width = this.wrap.clientWidth;
-  const height = this.wrap.clientHeight;
-  const margin = width / 3;
-
+  const width = this.wrap.clientWidth,
+        height = this.wrap.clientHeight,
+        margin = width / 5,
   // The viewport
-  const left = this.wrap.scrollLeft, right = left + width;
-  const top = this.wrap.scrollTop, bottom = top + height;
-
-  const player = this.level.player;
-  const center = player.pos.plus(player.size.times(0.5)).times(scale);
+        left = this.wrap.scrollLeft,
+        top = this.wrap.scrollTop,
+        right = left + width,
+        bottom = top + height,
+        player = this.level.player,
+        center = player.pos.plus(player.size.times(0.5)).times(scale);
 
   if(center.x < left + margin)
     this.wrap.scrollLeft = center.x - margin;
@@ -179,43 +190,42 @@ Level.prototype.obstacleAt = function(pos, size) {
     return "wall";
   if(yEnd > this.height)
     return "lava";
-  for(var y = yStart; y < yEnd; y++) {
-    for(var x = xStart; x < xEnd; x++) {
-      var fieldType = this.grid[y][x];
-      if(fieldType) return fieldType;
+  for(y = yStart; y < yEnd; y++) {
+    for(x = xStart; x < xEnd; x++) {
+      const fieldType = this.grid[y][x];
+      if(fieldType)
+        return fieldType;
     }
   }
 };
 
 Level.prototype.elementAt = function(elm) {
-  for(var i = 0; i < this.elements.length; i++) {
-    var other = this.elements[i];
+  for(i = 0; i < this.elements.length; i++) {
+    const other = this.elements[i];
     if(other != elm &&
-        elm.pos.x + elm.size.x > other.pos.x &&
-        elm.pos.x < other.pos.x + other.size.x &&
-        elm.pos.y + elm.size.y > other.pos.y &&
-        elm.pos.y < other.pos.y + other.size.y)
+                elm.pos.x + elm.size.x > other.pos.x &&
+                elm.pos.x < other.pos.x + other.size.x &&
+                elm.pos.y + elm.size.y > other.pos.y &&
+                elm.pos.y < other.pos.y + other.size.y)
       return other;
   }
 };
 
-var maxStep = 0.05;
 
+//Animate the game
 Level.prototype.animate = function(step, keys) {
   if(this.status != null)
     this.finishDelay -= step;
 
   while (step > 0) {
-    var thisStep = Math.min(step, maxStep);
-    this.elements.forEach(function(elm) {
-      elm.act(thisStep, this, keys);
-    }, this);
+    const thisStep = Math.min(step, 0.05);
+    this.elements.forEach(elm => elm.act(thisStep, this, keys), this);
     step -= thisStep;
   }
 };
 
 Lava.prototype.act = function(step, level) {
-  var newPos = this.pos.plus(this.speed.times(step));
+  const newPos = this.pos.plus(this.speed.times(step));
   if(!level.obstacleAt(newPos, this.size))
     this.pos = newPos;
   else if(this.repeatPos)
@@ -224,38 +234,40 @@ Lava.prototype.act = function(step, level) {
     this.speed = this.speed.times(-1);
 };
 
-var wobbleSpeed = 6, wobbleDist = 0.10;
+const wobbleSpeed = 6, wobbleDist = 0.10;
 
 Coin.prototype.act = function(step) {
   this.wobble += step * wobbleSpeed;
-  var wobblePos = Math.sin(this.wobble) * wobbleDist;
+  const wobblePos = Math.sin(this.wobble) * wobbleDist;
   this.pos = this.basePos.plus(new Vector(0, wobblePos));
 };
 
-var playerXSpeed = 6;
+const playerXSpeed = 6;
 
 Player.prototype.moveX = function(step, level, keys) {
   this.speed.x = 0;
-  if(keys.left) this.speed.x -= playerXSpeed;
-  if(keys.right) this.speed.x += playerXSpeed;
+  if(keys.left)
+    this.speed.x -= playerXSpeed;
+  if(keys.right)
+    this.speed.x += playerXSpeed;
 
-  var motion = new Vector(this.speed.x * step, 0);
-  var newPos = this.pos.plus(motion);
-  var obstacle = level.obstacleAt(newPos, this.size);
+  const motion = new Vector(this.speed.x * step, 0);
+  const newPos = this.pos.plus(motion);
+  const obstacle = level.obstacleAt(newPos, this.size);
   if(obstacle)
     level.playerTouched(obstacle);
   else
     this.pos = newPos;
 };
 
-var gravity = 30;
-var jumpSpeed = 17;
+const gravity = 30;
+const jumpSpeed = 17;
 
 Player.prototype.moveY = function(step, level, keys) {
   this.speed.y += step * gravity;
-  var motion = new Vector(0, this.speed.y * step);
-  var newPos = this.pos.plus(motion);
-  var obstacle = level.obstacleAt(newPos, this.size);
+  const motion = new Vector(0, this.speed.y * step);
+  const newPos = this.pos.plus(motion);
+  const obstacle = level.obstacleAt(newPos, this.size);
   if(obstacle) {
     level.playerTouched(obstacle);
     if(keys.up && this.speed.y > 0)
@@ -271,7 +283,7 @@ Player.prototype.act = function(step, level, keys) {
   this.moveX(step, level, keys);
   this.moveY(step, level, keys);
 
-  var otherActor = level.elementAt(this);
+  const otherActor = level.elementAt(this);
   if(otherActor)
     level.playerTouched(otherActor.type, otherActor);
 };
@@ -281,25 +293,21 @@ Level.prototype.playerTouched = function(type, elm) {
     this.status = "lost";
     this.finishDelay = 0;
   } else if(type == "coin") {
-    this.elements = this.elements.filter(function(other) {
-      return other != elm;
-    });
-    if(!this.elements.some(function(elm) {
-      return elm.type == "coin";
-    })) {
+    this.elements = this.elements.filter(other => other != elm);
+    if(!this.elements.some(elm => elm.type == "coin")) {
       this.status = "won";
       this.finishDelay = 1;
     }
   }
 };
 
-var arrowCodes = {37: "left", 38: "up", 39: "right"};
+const arrowCodes = {37: "left", 38: "up", 39: "right"};
 
 function trackKeys(codes) {
-  var pressed = Object.create(null);
+  const pressed = Object.create(null);
   function handler(event) {
     if(codes.hasOwnProperty(event.keyCode)) {
-      var down = event.type == "keydown";
+      const down = event.type == "keydown";
       pressed[codes[event.keyCode]] = down;
       event.preventDefault();
     }
@@ -310,11 +318,11 @@ function trackKeys(codes) {
 }
 
 function runAnimation(frameFunc) {
-  var lastTime = null;
+  let lastTime = null;
   function frame(time) {
-    var stop = false;
+    let stop = false;
     if(lastTime != null) {
-      var timeStep = Math.min(time - lastTime, 100) / 1000;
+      const timeStep = Math.min(time - lastTime, 100) / 1000;
       stop = frameFunc(timeStep) === false;
     }
     lastTime = time;
@@ -324,32 +332,18 @@ function runAnimation(frameFunc) {
   requestAnimationFrame(frame);
 }
 
-var arrows = trackKeys(arrowCodes);
+const arrows = trackKeys(arrowCodes);
 
-function runLevel(level, Display, andThen) {
-  var display = new Display(document.body, level);
-  runAnimation(function(step) {
+function runGame(plan) {
+  const level = new Level(plan);
+  const display = new DOMDisplay(document.body, level);
+  runAnimation(step => {
     level.animate(step, arrows);
     display.drawFrame(step);
     if(level.isFinished()) {
+      console.log(display);
       display.clear();
-      if(andThen)
-        andThen(level.status);
-      return false;
+      level.status == 'lost' ? runGame(plan) : console.log('You win!');
     }
   });
-}
-
-function runGame(plan, Display) {
-  function startLevel(n) {
-    runLevel(new Level(plan), Display, function(status) {
-      if(status == "lost")
-        startLevel(n);
-      else if(n < plan.length - 1)
-        startLevel(n + 1);
-      else
-        console.log("You win!");
-    });
-  }
-  startLevel(0);
 }
