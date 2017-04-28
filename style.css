@@ -1,5 +1,6 @@
 /** Styling the game field **/
 body {
+	background-color: rgb(51, 51, 51);
 	padding: 0;
 	margin: 0;
 }
