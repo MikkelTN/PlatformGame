@@ -1,28 +1,15 @@
 const levelPlan = [
-  "                      ",
-  "  o  o                ",
-  " xxxxxx               ",
-  "                      ",
-  "            xxxx      ",
-  "                      ",
-  "     xx               ",
-  "                      ",
-  "                      ",
-  "        xx            ",
-  "                      ",
-  "             xxxxx    ",
-  "                      ",
-  "                      ",
-  "                      ",
-  "      xxxxx           ",
-  "                      ",
-  "  x              = x  ",
-  "  x         o o    x  ",
-  "  x @      xxxxx   x  ",
-  "  xxxxx            x  ",
-  "      xwwwwwwwwwwwwx  ",
-  "      xxxxxxxxxxxxxx  ",
-  "wwwwwwwwwwwwwwwwwwwwww"
+  "                                                             ",
+  "                                                             ",
+  "                                                             ",
+  "                                         o o                 ",
+  "  x              =                      xxxxx             x  ",
+  "  x         o o           xxxxx                           x  ",
+  "  x @ x    xxxxx      |                               o   x  ",
+  "  xxxxx                                                   x  ",
+  "      x            xxxxxxxxxxxxxxxxxxxxxxxxxxxx       xxxxx  ",
+  "      xwwwwwwwwwwwwx                          xwwwwwwwx      ",
+  "      xxxxxxxxxxxxxx                          xxxxxxxxx      "
 ];
 
 //Build the level from the levelplan
@@ -47,25 +34,20 @@ function Level(plan) {
     }
     this.grid.push(gridLine);
   }
-
   this.player = this.elements.filter(elm => elm.type == "player")[0];
   this.status = this.finishDelay = null;
-}
 
-Level.prototype.isFinished = function() {
-  return this.status != null && this.finishDelay < 0;
-};
+  this.isFinished = () => this.status != null && this.finishDelay < 0;
+}
 
 //The vector is used for drawing, movement, positioning etc.
 function Vector(x, y) {
-  this.x = x; this.y = y;
+  this.x = x;
+  this.y = y;
+
+  this.plus = other => new Vector(this.x + other.x, this.y + other.y);
+  this.times =  factor => new Vector(this.x * factor, this.y * factor);
 }
-Vector.prototype.plus = function(other) {
-  return new Vector(this.x + other.x, this.y + other.y);
-};
-Vector.prototype.times = function(factor) {
-  return new Vector(this.x * factor, this.y * factor);
-};
 
 //The elements are constructed from their char in the leveldrawing
 const elementChars = {
@@ -75,8 +57,8 @@ const elementChars = {
 };
 
 function Player(pos) {
-  this.pos = pos.plus(new Vector(0, -0.5));
-  this.size = new Vector(0.8, 1.5);
+  this.pos = pos.plus(new Vector(0, 0));
+  this.size = new Vector(1, 1);
   this.speed = new Vector(0, 0);
 }
 Player.prototype.type = "player";
@@ -92,14 +74,33 @@ function Lava(pos, ch) {
     this.speed = new Vector(0, 3);
     this.repeatPos = pos;
   }
-}
+
+  this.act = (step, level) => {
+    const newPos = this.pos.plus(this.speed.times(step));
+    if(!level.obstacleAt(newPos, this.size))
+      this.pos = newPos;
+    else if(this.repeatPos)
+      this.pos = this.repeatPos;
+    else
+      this.speed = this.speed.times(-1);
+  }
+};
 Lava.prototype.type = "lava";
 
 function Coin(pos) {
   this.basePos = this.pos = pos.plus(new Vector(0.2, 0.1));
   this.size = new Vector(0.6, 0.6);
   this.wobble = Math.random() * Math.PI * 2;
-}
+  //Speed and dist are set as preferred
+  this.wobbleSpeed = 6,
+  this.wobbleDist = 0.10;
+
+  this.act = step => {
+    this.wobble += step * this.wobbleSpeed;
+    const wobblePos = Math.sin(this.wobble) * this.wobbleDist;
+    this.pos = this.basePos.plus(new Vector(0, wobblePos));
+  }
+};
 Coin.prototype.type = "coin";
 
 //For displaying the game I need a quick way of inserting html elements
@@ -110,19 +111,18 @@ function elt(name, className) {
   return elt;
 }
 
-function DOMDisplay(parent, level) {
+//Functions for displaying the game and the actors
+function Display(parent, level) {
   this.wrap = parent.appendChild(elt("div", "game"));
   this.level = level;
-
   this.wrap.appendChild(this.drawBackground());
   this.elmLayer = null;
   this.drawFrame();
 }
 
-//Functions for drawing the game and the actors
-const scale = Math.floor(Math.min(window.innerWidth, window.innerHeight) / 10);
+const scale = 50;
 
-DOMDisplay.prototype.drawBackground = function() {
+Display.prototype.drawBackground = function() {
   const table = elt("table", "background");
   table.style.width = this.level.width * scale + "px";
   this.level.grid.forEach(row => {
@@ -133,7 +133,7 @@ DOMDisplay.prototype.drawBackground = function() {
   return table;
 };
 
-DOMDisplay.prototype.drawElements = function() {
+Display.prototype.drawElements = function() {
   const wrap = elt("div");
   this.level.elements.forEach(elm => {
     const rect = wrap.appendChild(elt("div", "element " + elm.type));
@@ -145,7 +145,7 @@ DOMDisplay.prototype.drawElements = function() {
   return wrap;
 };
 
-DOMDisplay.prototype.drawFrame = function() {
+Display.prototype.drawFrame = function() {
   if(this.elmLayer)
     this.wrap.removeChild(this.elmLayer);
   this.elmLayer = this.wrap.appendChild(this.drawElements());
@@ -153,38 +153,23 @@ DOMDisplay.prototype.drawFrame = function() {
   this.scrollPlayerIntoView();
 };
 
-DOMDisplay.prototype.scrollPlayerIntoView = function() {
+Display.prototype.scrollPlayerIntoView = function() {
   const width = this.wrap.clientWidth,
-        height = this.wrap.clientHeight,
-        margin = width / 5,
-  // The viewport
+        margin = width / 4,
         left = this.wrap.scrollLeft,
-        top = this.wrap.scrollTop,
-        right = left + width,
-        bottom = top + height,
         player = this.level.player,
         center = player.pos.plus(player.size.times(0.5)).times(scale);
 
-  if(center.x < left + margin)
+  if(center.x > left + margin)
     this.wrap.scrollLeft = center.x - margin;
-  else if(center.x > right - margin)
-    this.wrap.scrollLeft = center.x + margin - width;
-  if(center.y < top + margin)
-    this.wrap.scrollTop = center.y - margin;
-  else if(center.y > bottom - margin)
-    this.wrap.scrollTop = center.y + margin - height;
-};
-
-DOMDisplay.prototype.clear = function() {
-  this.wrap.parentNode.removeChild(this.wrap);
 };
 
 //The physics engine!
 Level.prototype.obstacleAt = function(pos, size) {
-  const xStart = Math.floor(pos.x);
-  const xEnd = Math.ceil(pos.x + size.x);
-  const yStart = Math.floor(pos.y);
-  const yEnd = Math.ceil(pos.y + size.y);
+  const xStart = Math.floor(pos.x),
+        xEnd = Math.ceil(pos.x + size.x),
+        yStart = Math.floor(pos.y),
+        yEnd = Math.ceil(pos.y + size.y);
 
   if(xStart < 0 || xEnd > this.width || yStart < 0)
     return "wall";
@@ -211,7 +196,6 @@ Level.prototype.elementAt = function(elm) {
   }
 };
 
-
 //Animate the game
 Level.prototype.animate = function(step, keys) {
   if(this.status != null)
@@ -224,53 +208,29 @@ Level.prototype.animate = function(step, keys) {
   }
 };
 
-Lava.prototype.act = function(step, level) {
-  const newPos = this.pos.plus(this.speed.times(step));
-  if(!level.obstacleAt(newPos, this.size))
-    this.pos = newPos;
-  else if(this.repeatPos)
-    this.pos = this.repeatPos;
-  else
-    this.speed = this.speed.times(-1);
+Player.prototype.move = function(step, level, keys) {
+  this.speed.x = keys.left ? 3 : 6;
+
+  const motion = new Vector(this.speed.x * step, 0),
+        newPos = this.pos.plus(motion),
+        obstacle = level.obstacleAt(newPos, this.size);
+
+  obstacle ? level.playerTouched(obstacle) : this.pos = newPos;
 };
 
-const wobbleSpeed = 6, wobbleDist = 0.10;
+const gravity = 30,
+      jumpSpeed = 12;
 
-Coin.prototype.act = function(step) {
-  this.wobble += step * wobbleSpeed;
-  const wobblePos = Math.sin(this.wobble) * wobbleDist;
-  this.pos = this.basePos.plus(new Vector(0, wobblePos));
-};
-
-const playerXSpeed = 6;
-
-Player.prototype.moveX = function(step, level, keys) {
-  this.speed.x = 0;
-  if(keys.left)
-    this.speed.x -= playerXSpeed;
-  if(keys.right)
-    this.speed.x += playerXSpeed;
-
-  const motion = new Vector(this.speed.x * step, 0);
-  const newPos = this.pos.plus(motion);
-  const obstacle = level.obstacleAt(newPos, this.size);
-  if(obstacle)
-    level.playerTouched(obstacle);
-  else
-    this.pos = newPos;
-};
-
-const gravity = 30;
-const jumpSpeed = 17;
-
-Player.prototype.moveY = function(step, level, keys) {
+Player.prototype.jump = function(step, level, keys) {
   this.speed.y += step * gravity;
-  const motion = new Vector(0, this.speed.y * step);
-  const newPos = this.pos.plus(motion);
-  const obstacle = level.obstacleAt(newPos, this.size);
+  
+  const motion = new Vector(0, this.speed.y * step),
+        newPos = this.pos.plus(motion),
+        obstacle = level.obstacleAt(newPos, this.size);
+
   if(obstacle) {
     level.playerTouched(obstacle);
-    if(keys.up && this.speed.y > 0)
+    if(keys.right && this.speed.y > 0)
       this.speed.y = -jumpSpeed;
     else
       this.speed.y = 0;
@@ -280,8 +240,8 @@ Player.prototype.moveY = function(step, level, keys) {
 };
 
 Player.prototype.act = function(step, level, keys) {
-  this.moveX(step, level, keys);
-  this.moveY(step, level, keys);
+  this.move(step, level, keys);
+  this.jump(step, level, keys);
 
   const otherActor = level.elementAt(this);
   if(otherActor)
@@ -301,19 +261,40 @@ Level.prototype.playerTouched = function(type, elm) {
   }
 };
 
-const arrowCodes = {37: "left", 38: "up", 39: "right"};
-
-function trackKeys(codes) {
+function action() {
   const pressed = Object.create(null);
-  function handler(event) {
-    if(codes.hasOwnProperty(event.keyCode)) {
-      const down = event.type == "keydown";
-      pressed[codes[event.keyCode]] = down;
-      event.preventDefault();
+  const keys = {37: 'left', 39: 'right'};
+  
+  function touchHandler(event) {
+    const length = event.touches.length;
+    console.log(length);
+    if(length == 1) {
+      if(event.touches[0].pageX > window.innerWidth / 2) {
+        pressed['right'] = true, pressed['left'] = false;
+      } else {
+        pressed['right'] = false, pressed['left'] = true;
+      }
+    } else if(length > 1) {
+      for(i = 0; i < event.touches.length; i++) {
+        const touch = event.touches[i];
+        touch.pageX > window.innerWidth / 2 ? pressed['right'] = true : pressed['left'] = true;
+      }
+    } else {
+      pressed['right'] = false, pressed['left'] = false;
     }
   }
-  addEventListener("keydown", handler);
-  addEventListener("keyup", handler);
+    
+  function keyHandler(event) {
+    if(keys.hasOwnProperty(event.keyCode)) {
+      pressed[keys[event.keyCode]] = event.type == 'keydown';
+      event.preventDefault();
+      console.log(pressed);
+    }
+  }
+  addEventListener('keydown', keyHandler);
+  addEventListener('keyup', keyHandler);
+  addEventListener('touchstart', touchHandler);
+  addEventListener('touchend', touchHandler);
   return pressed;
 }
 
@@ -332,17 +313,17 @@ function runAnimation(frameFunc) {
   requestAnimationFrame(frame);
 }
 
-const arrows = trackKeys(arrowCodes);
+const controls = action();
 
 function runGame(plan) {
   const level = new Level(plan);
-  const display = new DOMDisplay(document.body, level);
+  const display = new Display(document.body, level);
   runAnimation(step => {
-    level.animate(step, arrows);
+    level.animate(step, controls);
     display.drawFrame(step);
     if(level.isFinished()) {
       console.log(display);
-      display.clear();
+      display.wrap.parentNode.removeChild(display.wrap);
       level.status == 'lost' ? runGame(plan) : console.log('You win!');
     }
   });
