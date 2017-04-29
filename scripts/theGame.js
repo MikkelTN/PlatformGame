@@ -1,15 +1,78 @@
-const levelPlan = [
-  "                                                             ",
-  "                                                             ",
-  "                                                             ",
-  "                                         o o                 ",
-  "  x              =                      xxxxx             x  ",
-  "  x         o o           xxxxx                           x  ",
-  "  x @ x    xxxxx      |                               o   x  ",
-  "  xxxxx                                                   x  ",
-  "      x            xxxxxxxxxxxxxxxxxxxxxxxxxxxx       xxxxx  ",
-  "      xwwwwwwwwwwwwx                          xwwwwwwwx      ",
-  "      xxxxxxxxxxxxxx                          xxxxxxxxx      "
+//Random level array
+const levelArr = [
+  [
+  "                    ",
+  "                    ",
+  "                    ",
+  " x                  ",
+  " x                  ",
+  " x                  ",
+  " x                  ",
+  " x @ x              ",
+  " ggggggggg     ggggg",
+  " ddddddddd     ddddd",
+  " dddddddddlllllddddd"
+  ], [
+  "                    ",
+  "                    ",
+  "       |            ",
+  "                    ",
+  "                    ",
+  "        o           ",
+  "      o   o         ",
+  "                    ",
+  "gggggg   | gggg  ggg",
+  "dddddd     dddd  ddd",
+  "ddddddllllldddd  ddd"
+  ], [
+  "                    ",
+  "                    ",
+  "                    ",
+  "                    ",
+  "                    ",
+  "          o o       ",
+  "    =    ggggg      ",
+  "          ddd       ",
+  "ggggggg        ggggg",
+  "ddddddd        ddddd",
+  "dddddddllllllllddddd"
+  ], [
+  "                    ",
+  "                    ",
+  "                    ",
+  "                    ",
+  "                    ",
+  "                    ",
+  "       =   o        ", 
+  "                    ",
+  "gggggggg   gggg |  g",
+  "dddddddd   dddd    d",
+  "dddddddd   ddddlllld"
+  ], [
+  "                    ",
+  "                    ",
+  "                    ",
+  "                    ",
+  "                o   ",
+  "                    ",
+  "         d  d  d    ",
+  "      d             ",
+  "ggggg   |  |  |  ggg",
+  "ddddd            ddd",
+  "dddddllllllllllllddd"
+  ], [
+  "                    ",
+  "                    ",
+  "                   x",
+  "                   x",
+  "                   x",
+  "                 o x",
+  "                gggg",
+  "              ggdddd",
+  "ggggggggggggggdddddd",
+  "dddddddddddddddddddd",
+  "dddddddddddddddddddd"
+  ]
 ];
 
 //Build the level from the levelplan
@@ -20,17 +83,30 @@ function Level(plan) {
   this.elements = [];
   
   for(y = 0; y < this.height; y++) {
-    const line = plan[y], gridLine = [];
+    const line = plan[y],
+          gridLine = [];
     for(x = 0; x < this.width; x++) {
-      let ch = line[x], fieldType = null;
-      const Element = elementChars[ch];
+      const ch = line[x],
+            Element = elementChars[ch];
+      let fieldType = null;
       if(Element)
         this.elements.push(new Element(new Vector(x, y), ch));
-      else if(ch == "x")
-        fieldType = "wall";
-      else if(ch == "w")
-        fieldType = "water";
-      gridLine.push(fieldType);
+      else {
+        switch(ch) {
+          case 'g':
+            fieldType = 'grass';
+            break;
+          case 'd':
+            fieldType = 'dirt';
+            break;
+          case 'l':
+            fieldType = 'lava';
+            break;
+          case 'x':
+            fieldType = 'wall';
+        }
+        gridLine.push(fieldType);
+      }
     }
     this.grid.push(gridLine);
   }
@@ -38,6 +114,19 @@ function Level(plan) {
   this.status = this.finishDelay = null;
 
   this.isFinished = () => this.status != null && this.finishDelay < 0;
+
+  this.playerTouched = (type, elm) => {
+    if((type == "lava") && this.status == null) {
+      this.status = "lost";
+      this.finishDelay = 0;
+    } else if(type == "coin") {
+      this.elements = this.elements.filter(other => other != elm);
+      if(!this.elements.some(elm => elm.type == "coin")) {
+        this.status = "won";
+        this.finishDelay = 1;
+      }
+    }
+  }
 }
 
 //The vector is used for drawing, movement, positioning etc.
@@ -58,7 +147,7 @@ const elementChars = {
 
 function Player(pos) {
   this.pos = pos.plus(new Vector(0, 0));
-  this.size = new Vector(1, 1);
+  this.size = new Vector(0.9, 0.9);
   this.speed = new Vector(0, 0);
 }
 Player.prototype.type = "player";
@@ -67,11 +156,11 @@ function Lava(pos, ch) {
   this.pos = pos;
   this.size = new Vector(1, 1);
   if(ch == "=") {
-    this.speed = new Vector(2, 0);
+    this.speed = new Vector(Math.random() * 3 + 1, 0);
   } else if(ch == "|") {
-    this.speed = new Vector(0, 2);
+    this.speed = new Vector(0, Math.random() * 3 + 1);
   } else if(ch == "v") {
-    this.speed = new Vector(0, 3);
+    this.speed = new Vector(0, Math.random() * 3 + 2);
     this.repeatPos = pos;
   }
 
@@ -209,7 +298,7 @@ Level.prototype.animate = function(step, keys) {
 };
 
 Player.prototype.move = function(step, level, keys) {
-  this.speed.x = keys.left ? 3 : 6;
+  this.speed.x = keys.left ? 4 : 8;
 
   const motion = new Vector(this.speed.x * step, 0),
         newPos = this.pos.plus(motion),
@@ -230,7 +319,7 @@ Player.prototype.jump = function(step, level, keys) {
 
   if(obstacle) {
     level.playerTouched(obstacle);
-    if(keys.right && this.speed.y > 0)
+    if(keys.up && this.speed.y > 0)
       this.speed.y = -jumpSpeed;
     else
       this.speed.y = 0;
@@ -248,39 +337,28 @@ Player.prototype.act = function(step, level, keys) {
     level.playerTouched(otherActor.type, otherActor);
 };
 
-Level.prototype.playerTouched = function(type, elm) {
-  if((type == "lava" || type == "water") && this.status == null) {
-    this.status = "lost";
-    this.finishDelay = 0;
-  } else if(type == "coin") {
-    this.elements = this.elements.filter(other => other != elm);
-    if(!this.elements.some(elm => elm.type == "coin")) {
-      this.status = "won";
-      this.finishDelay = 1;
-    }
-  }
-};
-
 function action() {
   const pressed = Object.create(null);
-  const keys = {37: 'left', 39: 'right'};
+  const keys = {37: 'left', 38: 'up'};
   
   function touchHandler(event) {
     const length = event.touches.length;
     console.log(length);
+    if(length >= 1)
+      event.preventDefault();
     if(length == 1) {
       if(event.touches[0].pageX > window.innerWidth / 2) {
-        pressed['right'] = true, pressed['left'] = false;
+        pressed['up'] = true, pressed['left'] = false;
       } else {
-        pressed['right'] = false, pressed['left'] = true;
+        pressed['up'] = false, pressed['left'] = true;
       }
     } else if(length > 1) {
       for(i = 0; i < event.touches.length; i++) {
         const touch = event.touches[i];
-        touch.pageX > window.innerWidth / 2 ? pressed['right'] = true : pressed['left'] = true;
+        touch.pageX > window.innerWidth / 2 ? pressed['up'] = true : pressed['left'] = true;
       }
     } else {
-      pressed['right'] = false, pressed['left'] = false;
+      pressed['up'] = false, pressed['left'] = false;
     }
   }
     
@@ -293,7 +371,7 @@ function action() {
   }
   addEventListener('keydown', keyHandler);
   addEventListener('keyup', keyHandler);
-  addEventListener('touchstart', touchHandler);
+  addEventListener('touchstart', touchHandler, {passive: false});
   addEventListener('touchend', touchHandler);
   return pressed;
 }
@@ -309,22 +387,34 @@ function runAnimation(frameFunc) {
     lastTime = time;
     if(!stop)
       requestAnimationFrame(frame);
-  }
+  } 
   requestAnimationFrame(frame);
 }
 
 const controls = action();
 
-function runGame(plan) {
-  const level = new Level(plan);
+//Given an array of levelplans of equal size, will start at first plan, end at last plan and randomize the rest.
+function levelRandomizer(levelPlan) {
+  let randomLevel = levelPlan[0];
+  for(i = 0; i < 1; i++) {
+    const randomPlan = Math.floor(Math.random() * (levelPlan.length - 2) + 1);
+    for(j = 0; j < randomLevel.length; j++)
+      randomLevel[j] += levelPlan[randomPlan][j];
+  }
+  for(j = 0; j < randomLevel.length; j++)
+      randomLevel[j] += levelPlan[levelPlan.length - 1][j];
+  return randomLevel;
+}
+
+function runGame() {
+  const level = new Level(levelRandomizer(levelArr));
   const display = new Display(document.body, level);
   runAnimation(step => {
     level.animate(step, controls);
     display.drawFrame(step);
     if(level.isFinished()) {
-      console.log(display);
       display.wrap.parentNode.removeChild(display.wrap);
-      level.status == 'lost' ? runGame(plan) : console.log('You win!');
+      level.status == 'lost' ? runGame() : console.log('You win!');
     }
   });
 }
