@@ -22,10 +22,16 @@ body {
 	background: rgb(255, 50, 50);
 }
 .wall {
-	background: green;
+	background: rgb(86, 86, 86);
 }
 .water {
 	background-color: rgb(100, 150, 255);
+}
+.grass {
+  background-color: rgb(1, 142, 14);	
+}
+.dirt {
+  background-color: rgb(87, 59, 12);
 }
 
 /** Styling the actors **/
@@ -34,9 +40,10 @@ body {
 }
 .coin {
 	background: rgb(241, 229, 89);
+	border-radius: 100px;
 }
 .player {
-	background: rgb(64, 64, 64);
+	background: rgb(51, 51, 51);
 }
 .won .player {
   box-shadow: -4px -7px 8px white, 4px -7px 8px white;
