@@ -1,28 +1,43 @@
 //Random level array
-const levelArr = [
+const levelArr = {
+  start : [
+  "                    ",
+  "                    ",
+  "                    ",
+  " x                  ",
+  " x                  ",
+  " x                  ",
+  " x                  ",
+  " x @x               ",
+  " ggggggggg     ggggg",
+  " ddddddddd     ddddd",
+  " dddddddddlllllddddd"
+  ],
+  end : [
+  "                    ",
+  "                    ",
+  "                   x",
+  "                   x",
+  "                   x",
+  "                 V x",
+  "                gggg",
+  "              ggdddd",
+  "ggggggggggggggdddddd",
+  "dddddddddddddddddddd",
+  "dddddddddddddddddddd"
+  ],
+  plains : [
   [
   "                    ",
   "                    ",
   "                    ",
-  " x                  ",
-  " x                  ",
-  " x                  ",
-  " x                  ",
-  " x @ x              ",
-  " ggggggggg     ggggg",
-  " ddddddddd     ddddd",
-  " dddddddddlllllddddd"
-  ], [
-  "                    ",
-  "                    ",
-  "       |            ",
   "                    ",
   "                    ",
   "        o           ",
   "      o   o         ",
   "                    ",
-  "gggggg   | gggg  ggg",
-  "dddddd     dddd  ddd",
+  "gggggg     gggg  ggg",
+  "dddddd | | dddd  ddd",
   "ddddddllllldddd  ddd"
   ], [
   "                    ",
@@ -43,10 +58,10 @@ const levelArr = [
   "                    ",
   "                    ",
   "                    ",
-  "       =   o        ", 
-  "                    ",
-  "gggggggg   gggg |  g",
-  "dddddddd   dddd    d",
+  "           o        ", 
+  "       =            ",
+  "gggggggg   gggg    g",
+  "dddddddd   dddd |  d",
   "dddddddd   ddddlllld"
   ], [
   "                    ",
@@ -57,23 +72,11 @@ const levelArr = [
   "                    ",
   "         d  d  d    ",
   "      d             ",
-  "ggggg   |  |  |  ggg",
-  "ddddd            ddd",
+  "ggggg            ggg",
+  "ddddd   | |   |  ddd",
   "dddddllllllllllllddd"
-  ], [
-  "                    ",
-  "                    ",
-  "                   x",
-  "                   x",
-  "                   x",
-  "                 o x",
-  "                gggg",
-  "              ggdddd",
-  "ggggggggggggggdddddd",
-  "dddddddddddddddddddd",
-  "dddddddddddddddddddd"
-  ]
-];
+  ]]
+};
 
 //Build the level from the levelplan
 function Level(plan) {
@@ -105,56 +108,65 @@ function Level(plan) {
           case 'x':
             fieldType = 'wall';
         }
-        gridLine.push(fieldType);
       }
+      gridLine.push(fieldType);
     }
     this.grid.push(gridLine);
   }
+
   this.player = this.elements.filter(elm => elm.type == "player")[0];
   this.status = this.finishDelay = null;
 
   this.isFinished = () => this.status != null && this.finishDelay < 0;
+}
 
-  this.playerTouched = (type, elm) => {
-    if((type == "lava") && this.status == null) {
-      this.status = "lost";
-      this.finishDelay = 0;
-    } else if(type == "coin") {
-      this.elements = this.elements.filter(other => other != elm);
-      if(!this.elements.some(elm => elm.type == "coin")) {
-        this.status = "won";
-        this.finishDelay = 1;
-      }
+Level.prototype.playerTouched = function(type, elm) {
+  if((type == "lava") && this.status == null) {
+    this.status = "lost";
+    this.finishDelay = 0;
+  } else if(type == "coin") {
+    this.elements = this.elements.filter(other => other != elm);
+  } else if(type == "victory") {
+    this.elements = this.elements.filter(other => other != elm);
+    if(!this.elements.some(elm => elm.type == "coin")) {
+      this.status = "won";
+      this.finishDelay = 1;
     }
   }
-}
+};
 
 //The vector is used for drawing, movement, positioning etc.
 function Vector(x, y) {
   this.x = x;
   this.y = y;
-
-  this.plus = other => new Vector(this.x + other.x, this.y + other.y);
-  this.times =  factor => new Vector(this.x * factor, this.y * factor);
 }
 
-//The elements are constructed from their char in the leveldrawing
+Vector.prototype.plus = function(other) {
+  return new Vector(this.x + other.x, this.y + other.y);
+}
+
+Vector.prototype.times = function(factor) {
+  return new Vector(this.x * factor, this.y * factor);
+}
+
+//The elements are constructed from their ch in the leveldrawing
 const elementChars = {
-  "@": Player,
-  "o": Coin,
-  "=": Lava, "|": Lava, "v": Lava
+  '@': Player,
+  'o': Coin,
+  'V': Victory,
+  '=': Lava, '|': Lava, 'v': Lava
 };
 
 function Player(pos) {
-  this.pos = pos.plus(new Vector(0, 0));
-  this.size = new Vector(0.9, 0.9);
+  this.pos = pos;
+  this.size = new Vector(0.99, 0.99);
   this.speed = new Vector(0, 0);
 }
-Player.prototype.type = "player";
+Player.prototype.type = 'player';
 
 function Lava(pos, ch) {
-  this.pos = pos;
-  this.size = new Vector(1, 1);
+  this.pos = pos.plus(new Vector(0.1, 0.1));
+  this.size = new Vector(0.8, 0.8);
   if(ch == "=") {
     this.speed = new Vector(Math.random() * 3 + 1, 0);
   } else if(ch == "|") {
@@ -163,18 +175,18 @@ function Lava(pos, ch) {
     this.speed = new Vector(0, Math.random() * 3 + 2);
     this.repeatPos = pos;
   }
-
-  this.act = (step, level) => {
-    const newPos = this.pos.plus(this.speed.times(step));
-    if(!level.obstacleAt(newPos, this.size))
-      this.pos = newPos;
-    else if(this.repeatPos)
-      this.pos = this.repeatPos;
-    else
-      this.speed = this.speed.times(-1);
-  }
 };
-Lava.prototype.type = "lava";
+Lava.prototype.type = 'lava';
+
+Lava.prototype.act = function(step, level) {
+  const newPos = this.pos.plus(this.speed.times(step));
+  if(!level.obstacleAt(newPos, this.size))
+    this.pos = newPos;
+  else if(this.repeatPos)
+    this.pos = this.repeatPos;
+  else
+    this.speed = this.speed.times(-1);
+};  
 
 function Coin(pos) {
   this.basePos = this.pos = pos.plus(new Vector(0.2, 0.1));
@@ -183,14 +195,22 @@ function Coin(pos) {
   //Speed and dist are set as preferred
   this.wobbleSpeed = 6,
   this.wobbleDist = 0.10;
-
-  this.act = step => {
-    this.wobble += step * this.wobbleSpeed;
-    const wobblePos = Math.sin(this.wobble) * this.wobbleDist;
-    this.pos = this.basePos.plus(new Vector(0, wobblePos));
-  }
 };
-Coin.prototype.type = "coin";
+Coin.prototype.type = 'coin';
+
+Coin.prototype.act = function(step) {
+  this.wobble += step * this.wobbleSpeed;
+  const wobblePos = Math.sin(this.wobble) * this.wobbleDist;
+  this.pos = this.basePos.plus(new Vector(0, wobblePos));
+};
+
+function Victory(pos) {
+  Coin.call(this, pos);
+  this.basePos = this.pos = pos.plus(new Vector(0.2, -0.4));
+  this.size = new Vector(0, 0);
+}
+Victory.prototype = Object.create(Coin.prototype);
+Victory.prototype.type = 'victory';
 
 //For displaying the game I need a quick way of inserting html elements
 function elt(name, className) {
@@ -200,7 +220,7 @@ function elt(name, className) {
   return elt;
 }
 
-//Functions for displaying the game and the actors
+//Functions for displaying the game and the elements
 function Display(parent, level) {
   this.wrap = parent.appendChild(elt("div", "game"));
   this.level = level;
@@ -217,19 +237,28 @@ Display.prototype.drawBackground = function() {
   this.level.grid.forEach(row => {
     const rowElt = table.appendChild(elt("tr"));
     rowElt.style.height = scale + "px";
-    row.forEach(type => rowElt.appendChild(elt("td", type)));
+    row.forEach(type => {
+      rowElt.appendChild(elt("td", type));
+    });
   });
   return table;
 };
 
 Display.prototype.drawElements = function() {
-  const wrap = elt("div");
+  const wrap = elt('div');
   this.level.elements.forEach(elm => {
-    const rect = wrap.appendChild(elt("div", "element " + elm.type));
-    rect.style.width = elm.size.x * scale + "px";
-    rect.style.height = elm.size.y * scale + "px";
-    rect.style.left = elm.pos.x * scale + "px";
-    rect.style.top = elm.pos.y * scale + "px";
+    const rect = wrap.appendChild(elt('div', 'element ' + elm.type));
+    rect.style.width = elm.size.x * scale + 'px';
+    rect.style.height = elm.size.y * scale + 'px';
+    rect.style.left = elm.pos.x * scale + 'px';
+    rect.style.top = elm.pos.y * scale + 'px';
+    if(elm.type == 'victory') {
+      rect.style.borderLeft = scale / 2 +'px solid transparent';
+      rect.style.borderRight = scale / 2 + 'px solid transparent';
+      rect.style.borderTop = scale + 'px solid rgb(241, 229, 89)';
+    } else if (elm.type == 'coin') {
+      rect.style.borderRadius = scale / 2 + 'px';
+    }
   });
   return wrap;
 };
@@ -307,8 +336,8 @@ Player.prototype.move = function(step, level, keys) {
   obstacle ? level.playerTouched(obstacle) : this.pos = newPos;
 };
 
-const gravity = 30,
-      jumpSpeed = 12;
+const gravity = 38,
+      jumpSpeed = 13;
 
 Player.prototype.jump = function(step, level, keys) {
   this.speed.y += step * gravity;
@@ -343,7 +372,6 @@ function action() {
   
   function touchHandler(event) {
     const length = event.touches.length;
-    console.log(length);
     if(length >= 1)
       event.preventDefault();
     if(length == 1) {
@@ -366,7 +394,6 @@ function action() {
     if(keys.hasOwnProperty(event.keyCode)) {
       pressed[keys[event.keyCode]] = event.type == 'keydown';
       event.preventDefault();
-      console.log(pressed);
     }
   }
   addEventListener('keydown', keyHandler);
@@ -395,14 +422,14 @@ const controls = action();
 
 //Given an array of levelplans of equal size, will start at first plan, end at last plan and randomize the rest.
 function levelRandomizer(levelPlan) {
-  let randomLevel = levelPlan[0];
-  for(i = 0; i < 1; i++) {
-    const randomPlan = Math.floor(Math.random() * (levelPlan.length - 2) + 1);
+  let randomLevel = levelPlan.start.slice(0);
+  for(i = 0; i < 10; i++) {
+    const randomPlan = Math.round(Math.random() * (levelPlan.plains.length - 1));
     for(j = 0; j < randomLevel.length; j++)
-      randomLevel[j] += levelPlan[randomPlan][j];
+      randomLevel[j] = randomLevel[j].concat(levelPlan.plains[randomPlan][j]);
   }
-  for(j = 0; j < randomLevel.length; j++)
-      randomLevel[j] += levelPlan[levelPlan.length - 1][j];
+  for(i = 0; i < randomLevel.length; i++)
+      randomLevel[i] = randomLevel[i].concat(levelPlan.end[i]);
   return randomLevel;
 }
 
@@ -411,7 +438,7 @@ function runGame() {
   const display = new Display(document.body, level);
   runAnimation(step => {
     level.animate(step, controls);
-    display.drawFrame(step);
+    display.drawFrame();
     if(level.isFinished()) {
       display.wrap.parentNode.removeChild(display.wrap);
       level.status == 'lost' ? runGame() : console.log('You win!');
