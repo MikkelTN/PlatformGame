@@ -469,7 +469,7 @@ const controls = action();
 //Given a levelplan object, the randomizer will start at start plan, end at end plan and randomize the rest.
 function levelRandomizer(levelPlan) {
   let randomLevel = levelPlan.start.slice(0);
-  for(i = 0; i < 10; i++) {
+  for(i = 0; i < 5; i++) {
     const randomPlan = Math.round(Math.random() * (levelPlan.plains.length - 1));
     for(j = 0; j < randomLevel.length; j++)
       randomLevel[j] = randomLevel[j].concat(levelPlan.plains[randomPlan][j]);
