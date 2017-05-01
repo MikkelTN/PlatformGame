@@ -3,7 +3,6 @@ const levelObj = {
   start : [
   "                    ",
   "                    ",
-  "                    ",
   " x                  ",
   " x                  ",
   " x                  ",
@@ -14,7 +13,6 @@ const levelObj = {
   " ddddddddwwwwwwddddd"
   ],
   end : [
-  "                    ",
   "                    ",
   "                   x",
   "                   x",
@@ -33,14 +31,12 @@ const levelObj = {
   "                    ",
   "                    ",
   "                    ",
-  "                    ",
   "      o   o     o   ",
   "                    ",
   "gggggg     gggg  ggg",
   "dddddd  |  dddd  ddd",
   "ddddddwwwwwddddwwddd"
   ], [
-  "                    ",
   "                    ",
   "                    ",
   "                    ",
@@ -57,14 +53,12 @@ const levelObj = {
   "                    ",
   "                    ",
   "                    ",
-  "                    ",
   "        o  o        ", 
   "       =      o     ",
   "gggggggg   gggg    g",
   "dddddddd   dddd |  d",
   "ddddddddwwwddddwwwwd"
   ], [
-  "                    ",
   "                    ",
   "                    ",
   "                    ",
@@ -80,7 +74,6 @@ const levelObj = {
   "                    ",
   "                    ",
   "                    ",
-  "                    ",
   "     o     o   o    ",
   "                    ",
   "       o     o   o  ",
@@ -88,7 +81,6 @@ const levelObj = {
   "ddddd|ddddd|ddd|dddd",
   "dddddwdddddwdddwdddd"
   ], [
-  "                    ",
   "                    ",
   "                    ",
   "                    ",
@@ -469,7 +461,7 @@ const controls = action();
 //Given a levelplan object, the randomizer will start at start plan, end at end plan and randomize the rest.
 function levelRandomizer(levelPlan) {
   let randomLevel = levelPlan.start.slice(0);
-  for(i = 0; i < 10; i++) {
+  for(i = 0; i < 5; i++) {
     const randomPlan = Math.round(Math.random() * (levelPlan.plains.length - 1));
     for(j = 0; j < randomLevel.length; j++)
       randomLevel[j] = randomLevel[j].concat(levelPlan.plains[randomPlan][j]);
