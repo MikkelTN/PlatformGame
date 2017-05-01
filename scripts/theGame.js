@@ -1,5 +1,5 @@
 //Random level array
-const levelArr = {
+const levelObj = {
   start : [
   "                    ",
   "                    ",
@@ -9,9 +9,9 @@ const levelArr = {
   " x                  ",
   " x                  ",
   " x @x               ",
-  " ggggggggg     ggggg",
-  " ddddddddd     ddddd",
-  " dddddddddlllllddddd"
+  " gggggggg      ggggg",
+  " dddddddd      ddddd",
+  " ddddddddwwwwwwddddd"
   ],
   end : [
   "                    ",
@@ -33,24 +33,24 @@ const levelArr = {
   "                    ",
   "                    ",
   "                    ",
-  "        o           ",
-  "      o   o         ",
+  "                    ",
+  "      o   o     o   ",
   "                    ",
   "gggggg     gggg  ggg",
-  "dddddd | | dddd  ddd",
-  "ddddddllllldddd  ddd"
+  "dddddd  |  dddd  ddd",
+  "ddddddwwwwwddddwwddd"
   ], [
   "                    ",
   "                    ",
   "                    ",
   "                    ",
   "                    ",
-  "          o o       ",
+  "           o        ",
   "    =    ggggg      ",
   "          ddd       ",
   "ggggggg        ggggg",
   "ddddddd        ddddd",
-  "dddddddllllllllddddd"
+  "dddddddwwwwwwwwddddd"
   ], [
   "                    ",
   "                    ",
@@ -58,23 +58,47 @@ const levelArr = {
   "                    ",
   "                    ",
   "                    ",
-  "           o        ", 
-  "       =            ",
+  "        o  o        ", 
+  "       =      o     ",
   "gggggggg   gggg    g",
   "dddddddd   dddd |  d",
-  "dddddddd   ddddlllld"
+  "ddddddddwwwddddwwwwd"
   ], [
   "                    ",
   "                    ",
   "                    ",
   "                    ",
   "                o   ",
-  "                    ",
-  "         d  d  d    ",
-  "      d             ",
+  "          o  o      ",
+  "       o  d  d      ",
+  "       d            ",
   "ggggg            ggg",
-  "ddddd   | |   |  ddd",
-  "dddddllllllllllllddd"
+  "ddddd    |     | ddd",
+  "dddddwwwwwwwwwwwwddd"
+  ], [
+  "                    ",
+  "                    ",
+  "                    ",
+  "                    ",
+  "                    ",
+  "     o     o   o    ",
+  "                    ",
+  "       o     o   o  ",
+  "ggggg ggggg ggg gggg",
+  "ddddd|ddddd|ddd|dddd",
+  "dddddwdddddwdddwdddd"
+  ], [
+  "                    ",
+  "                    ",
+  "                    ",
+  "                    ",
+  "                    ",
+  "                  o ",
+  "               o    ",
+  "           o   d    ",
+  "gggg  o  = d       g",
+  "ddddddd            d",
+  "ddddddddwwwwwwwwwwwd"
   ]]
 };
 
@@ -84,6 +108,7 @@ function Level(plan) {
   this.height = plan.length;
   this.grid = [];
   this.elements = [];
+  this.coins = 0;
   
   for(y = 0; y < this.height; y++) {
     const line = plan[y],
@@ -102,8 +127,8 @@ function Level(plan) {
           case 'd':
             fieldType = 'dirt';
             break;
-          case 'l':
-            fieldType = 'lava';
+          case 'w':
+            fieldType = 'water';
             break;
           case 'x':
             fieldType = 'wall';
@@ -120,18 +145,63 @@ function Level(plan) {
   this.isFinished = () => this.status != null && this.finishDelay < 0;
 }
 
+//The physics engine!
+Level.prototype.obstacleAt = function(pos, size) {
+  const xStart = Math.floor(pos.x),
+        xEnd = Math.ceil(pos.x + size.x),
+        yStart = Math.floor(pos.y),
+        yEnd = Math.ceil(pos.y + size.y);
+
+  if(xStart < 0 || xEnd > this.width || yStart < 0)
+    return "wall";
+  if(yEnd > this.height)
+    return "lava";
+  for(y = yStart; y < yEnd; y++) {
+    for(x = xStart; x < xEnd; x++) {
+      const fieldType = this.grid[y][x];
+      if(fieldType)
+        return fieldType;
+    }
+  }
+};
+
+Level.prototype.elementAt = function(elm) {
+  for(i = 0; i < this.elements.length; i++) {
+    const other = this.elements[i];
+    if(other != elm &&
+                elm.pos.x + elm.size.x > other.pos.x &&
+                elm.pos.x < other.pos.x + other.size.x &&
+                elm.pos.y + elm.size.y > other.pos.y &&
+                elm.pos.y < other.pos.y + other.size.y)
+      return other;
+  }
+};
+
 Level.prototype.playerTouched = function(type, elm) {
-  if((type == "lava") && this.status == null) {
-    this.status = "lost";
+  if((type == 'water' || type == 'floater' || type == 'jumper') && this.status == null) {
+    this.status = 'lost';
     this.finishDelay = 0;
-  } else if(type == "coin") {
+  } else if(type == 'coin') {
     this.elements = this.elements.filter(other => other != elm);
-  } else if(type == "victory") {
+    this.coins++;
+  } else if(type == 'victory') {
     this.elements = this.elements.filter(other => other != elm);
-    if(!this.elements.some(elm => elm.type == "coin")) {
-      this.status = "won";
+    if(!this.elements.some(elm => elm.type == 'victory')) {
+      this.status = 'won';
       this.finishDelay = 1;
     }
+  }
+};
+
+//Animation of the level
+Level.prototype.animate = function(step, keys) {
+  if(this.status != null)
+    this.finishDelay -= step;
+
+  while (step > 0) {
+    const thisStep = Math.min(step, 0.05);
+    this.elements.forEach(elm => elm.act(thisStep, this, keys), this);
+    step -= thisStep;
   }
 };
 
@@ -154,40 +224,96 @@ const elementChars = {
   '@': Player,
   'o': Coin,
   'V': Victory,
-  '=': Lava, '|': Lava, 'v': Lava
+  '=': Floater,
+  '|': Jumper
 };
 
+//Player class and methods
 function Player(pos) {
   this.pos = pos;
-  this.size = new Vector(0.99, 0.99);
+  this.size = new Vector(1, 0.99);
   this.speed = new Vector(0, 0);
 }
 Player.prototype.type = 'player';
 
-function Lava(pos, ch) {
-  this.pos = pos.plus(new Vector(0.1, 0.1));
-  this.size = new Vector(0.8, 0.8);
-  if(ch == "=") {
-    this.speed = new Vector(Math.random() * 3 + 1, 0);
-  } else if(ch == "|") {
-    this.speed = new Vector(0, Math.random() * 3 + 1);
-  } else if(ch == "v") {
-    this.speed = new Vector(0, Math.random() * 3 + 2);
-    this.repeatPos = pos;
+Player.prototype.move = function(step, level, keys) {
+  this.speed.x = keys.left ? 2 : 8;
+
+  const motion = new Vector(this.speed.x * step, 0),
+        newPos = this.pos.plus(motion),
+        obstacle = level.obstacleAt(newPos, this.size);
+
+  obstacle ? level.playerTouched(obstacle) : this.pos = newPos;
+};
+
+const gravity = 38,
+      jumpSpeed = 13;
+
+Player.prototype.jump = function(step, level, keys) {
+  this.speed.y += step * gravity;
+  
+  const motion = new Vector(0, this.speed.y * step),
+        newPos = this.pos.plus(motion),
+        obstacle = level.obstacleAt(newPos, this.size);
+
+  if(obstacle) {
+    level.playerTouched(obstacle);
+    if(keys.up && this.speed.y > 0)
+      this.speed.y = -jumpSpeed;
+    else
+      this.speed.y = 0;
+  } else {
+    this.pos = newPos;
   }
 };
-Lava.prototype.type = 'lava';
 
-Lava.prototype.act = function(step, level) {
+Player.prototype.act = function(step, level, keys) {
+  this.move(step, level, keys);
+  this.jump(step, level, keys);
+
+  const otherActor = level.elementAt(this);
+  if(otherActor)
+    level.playerTouched(otherActor.type, otherActor);
+};
+
+//Enemy classes and methods
+function Floater(pos, ch) {
+  this.pos = pos.plus(new Vector(0.1, 0.2));
+  this.size = new Vector(0.8, 0.8);
+  this.speed = new Vector(Math.random() * 3 + 1, 0);
+};
+Floater.prototype.type = 'floater';
+
+Floater.prototype.act = function(step, level) {
   const newPos = this.pos.plus(this.speed.times(step));
   if(!level.obstacleAt(newPos, this.size))
     this.pos = newPos;
-  else if(this.repeatPos)
-    this.pos = this.repeatPos;
   else
     this.speed = this.speed.times(-1);
-};  
+};
 
+function Jumper(pos, ch) {
+  this.pos = pos.plus(new Vector(0.1, 0.2));
+  this.size = new Vector(0.8, 0.8);
+  this.speed = new Vector(0, 0);
+}
+Jumper.prototype.type = 'jumper';
+
+Jumper.prototype.act = function(step, level) {
+  const motion = new Vector(0, this.speed.y * step),
+        newPos = this.pos.plus(motion);
+  this.speed.y += step * gravity / 2;
+
+  if(level.obstacleAt(newPos, this.size)) {
+    if(this.speed.y > 0)
+      this.speed.y = -(Math.random() * 5 + 10);
+    else
+      this.speed.y = 0;
+  } else
+    this.pos = newPos;
+};
+
+//Collectible classes and methods
 function Coin(pos) {
   this.basePos = this.pos = pos.plus(new Vector(0.2, 0.1));
   this.size = new Vector(0.6, 0.6);
@@ -207,16 +333,18 @@ Coin.prototype.act = function(step) {
 function Victory(pos) {
   Coin.call(this, pos);
   this.basePos = this.pos = pos.plus(new Vector(0.2, -0.4));
-  this.size = new Vector(0, 0);
+  this.size = new Vector(0, 1);
 }
 Victory.prototype = Object.create(Coin.prototype);
 Victory.prototype.type = 'victory';
 
 //For displaying the game I need a quick way of inserting html elements
-function elt(name, className) {
+function elt(name, className, msg) {
   const elt = document.createElement(name);
   if(className)
     elt.className = className;
+  if(msg)
+    elt.innerHTML = msg;
   return elt;
 }
 
@@ -229,6 +357,7 @@ function Display(parent, level) {
   this.drawFrame();
 }
 
+//Scale is set manually
 const scale = 50;
 
 Display.prototype.drawBackground = function() {
@@ -282,90 +411,7 @@ Display.prototype.scrollPlayerIntoView = function() {
     this.wrap.scrollLeft = center.x - margin;
 };
 
-//The physics engine!
-Level.prototype.obstacleAt = function(pos, size) {
-  const xStart = Math.floor(pos.x),
-        xEnd = Math.ceil(pos.x + size.x),
-        yStart = Math.floor(pos.y),
-        yEnd = Math.ceil(pos.y + size.y);
-
-  if(xStart < 0 || xEnd > this.width || yStart < 0)
-    return "wall";
-  if(yEnd > this.height)
-    return "lava";
-  for(y = yStart; y < yEnd; y++) {
-    for(x = xStart; x < xEnd; x++) {
-      const fieldType = this.grid[y][x];
-      if(fieldType)
-        return fieldType;
-    }
-  }
-};
-
-Level.prototype.elementAt = function(elm) {
-  for(i = 0; i < this.elements.length; i++) {
-    const other = this.elements[i];
-    if(other != elm &&
-                elm.pos.x + elm.size.x > other.pos.x &&
-                elm.pos.x < other.pos.x + other.size.x &&
-                elm.pos.y + elm.size.y > other.pos.y &&
-                elm.pos.y < other.pos.y + other.size.y)
-      return other;
-  }
-};
-
-//Animate the game
-Level.prototype.animate = function(step, keys) {
-  if(this.status != null)
-    this.finishDelay -= step;
-
-  while (step > 0) {
-    const thisStep = Math.min(step, 0.05);
-    this.elements.forEach(elm => elm.act(thisStep, this, keys), this);
-    step -= thisStep;
-  }
-};
-
-Player.prototype.move = function(step, level, keys) {
-  this.speed.x = keys.left ? 4 : 8;
-
-  const motion = new Vector(this.speed.x * step, 0),
-        newPos = this.pos.plus(motion),
-        obstacle = level.obstacleAt(newPos, this.size);
-
-  obstacle ? level.playerTouched(obstacle) : this.pos = newPos;
-};
-
-const gravity = 38,
-      jumpSpeed = 13;
-
-Player.prototype.jump = function(step, level, keys) {
-  this.speed.y += step * gravity;
-  
-  const motion = new Vector(0, this.speed.y * step),
-        newPos = this.pos.plus(motion),
-        obstacle = level.obstacleAt(newPos, this.size);
-
-  if(obstacle) {
-    level.playerTouched(obstacle);
-    if(keys.up && this.speed.y > 0)
-      this.speed.y = -jumpSpeed;
-    else
-      this.speed.y = 0;
-  } else {
-    this.pos = newPos;
-  }
-};
-
-Player.prototype.act = function(step, level, keys) {
-  this.move(step, level, keys);
-  this.jump(step, level, keys);
-
-  const otherActor = level.elementAt(this);
-  if(otherActor)
-    level.playerTouched(otherActor.type, otherActor);
-};
-
+//The action handler handles touch or keyboard controls
 function action() {
   const pressed = Object.create(null);
   const keys = {37: 'left', 38: 'up'};
@@ -420,7 +466,7 @@ function runAnimation(frameFunc) {
 
 const controls = action();
 
-//Given an array of levelplans of equal size, will start at first plan, end at last plan and randomize the rest.
+//Given a levelplan object, the randomizer will start at start plan, end at end plan and randomize the rest.
 function levelRandomizer(levelPlan) {
   let randomLevel = levelPlan.start.slice(0);
   for(i = 0; i < 10; i++) {
@@ -434,14 +480,20 @@ function levelRandomizer(levelPlan) {
 }
 
 function runGame() {
-  const level = new Level(levelRandomizer(levelArr));
+  const level = new Level(levelRandomizer(levelObj));
   const display = new Display(document.body, level);
   runAnimation(step => {
     level.animate(step, controls);
     display.drawFrame();
     if(level.isFinished()) {
       display.wrap.parentNode.removeChild(display.wrap);
-      level.status == 'lost' ? runGame() : console.log('You win!');
+      if(level.status == 'lost')
+        runGame()
+      else {
+        document.body.appendChild(elt('h1', 'winmsg', 'You finished the level, and you collected ' +
+                                      level.coins +
+                                      (level.coins == 1 ? ' coin!' : ' coins!')));
+      }
     }
   });
 }
