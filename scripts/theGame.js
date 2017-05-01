@@ -8,9 +8,9 @@ const levelObj = {
   " x                  ",
   " x                  ",
   " x @x               ",
-  " gggggggg      ggggg",
-  " dddddddd      ddddd",
-  " ddddddddwwwwwwddddd"
+  " ggggggggg     ggggg",
+  " ddddddddd     ddddd",
+  " dddddddddwwwwwddddd"
   ],
   end : [
   "                    ",
@@ -394,13 +394,20 @@ Display.prototype.drawFrame = function() {
 
 Display.prototype.scrollPlayerIntoView = function() {
   const width = this.wrap.clientWidth,
-        margin = width / 4,
+        height = this.wrap.clientHeight,
+        margin = width / 5,
         left = this.wrap.scrollLeft,
+        top = this.wrap.scrollTop,
+        bottom = top + height,
         player = this.level.player,
         center = player.pos.plus(player.size.times(0.5)).times(scale);
 
   if(center.x > left + margin)
     this.wrap.scrollLeft = center.x - margin;
+  if (center.y < top + margin)
+    this.wrap.scrollTop = center.y - margin;
+  else if (center.y > bottom - margin)
+    this.wrap.scrollTop = center.y + margin - height;
 };
 
 //The action handler handles touch or keyboard controls
