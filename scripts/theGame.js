@@ -3,7 +3,6 @@ const levelObj = {
   start : [
   "                    ",
   "                    ",
-  "                    ",
   " x                  ",
   " x                  ",
   " x                  ",
@@ -14,7 +13,6 @@ const levelObj = {
   " ddddddddwwwwwwddddd"
   ],
   end : [
-  "                    ",
   "                    ",
   "                   x",
   "                   x",
@@ -33,14 +31,12 @@ const levelObj = {
   "                    ",
   "                    ",
   "                    ",
-  "                    ",
   "      o   o     o   ",
   "                    ",
   "gggggg     gggg  ggg",
   "dddddd  |  dddd  ddd",
   "ddddddwwwwwddddwwddd"
   ], [
-  "                    ",
   "                    ",
   "                    ",
   "                    ",
@@ -57,14 +53,12 @@ const levelObj = {
   "                    ",
   "                    ",
   "                    ",
-  "                    ",
   "        o  o        ", 
   "       =      o     ",
   "gggggggg   gggg    g",
   "dddddddd   dddd |  d",
   "ddddddddwwwddddwwwwd"
   ], [
-  "                    ",
   "                    ",
   "                    ",
   "                    ",
@@ -80,7 +74,6 @@ const levelObj = {
   "                    ",
   "                    ",
   "                    ",
-  "                    ",
   "     o     o   o    ",
   "                    ",
   "       o     o   o  ",
@@ -88,7 +81,6 @@ const levelObj = {
   "ddddd|ddddd|ddd|dddd",
   "dddddwdddddwdddwdddd"
   ], [
-  "                    ",
   "                    ",
   "                    ",
   "                    ",

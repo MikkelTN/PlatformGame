@@ -2,10 +2,27 @@
 <html>
   <head>
     <link rel="stylesheet" href="style.css">
+    <!-- Import FA -->
+  	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     
+    <!-- The actual game -->
     <script type="text/javascript" src="scripts/theGame.js"></script>
+
+    <script type="text/javascript" src="scripts/fadeControls.js"></script>
   </head>
   <body>
+  <div class="controls">
+    <div class="left">
+      <h2>Slow down
+        <i class="fa fa-arrow-left"></i>
+      </h2>
+    </div>
+    <div class="up">
+      <h2>Jump
+        <i class="fa fa-arrow-up"></i>
+      </h2>
+    </div>
+  </div>
   	<script>
       runGame();
     </script>
