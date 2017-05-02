@@ -11,20 +11,21 @@
     <script type="text/javascript" src="scripts/fadeControls.js"></script>
   </head>
   <body>
-  <div class="controls">
-    <div class="left">
-      <h2>Slow down
-        <i class="fa fa-arrow-left"></i>
-      </h2>
+    <h2 class="coinCount"></h2>
+    <div class="controls">
+      <div class="left">
+        <h2>Slow down
+          <i class="fa fa-arrow-left"></i>
+        </h2>
+      </div>
+      <div class="up">
+        <h2>Jump
+          <i class="fa fa-arrow-up"></i>
+        </h2>
+      </div>
     </div>
-    <div class="up">
-      <h2>Jump
-        <i class="fa fa-arrow-up"></i>
-      </h2>
-    </div>
-  </div>
   	<script>
-      runGame();
+      runGame(new Level(levelRandomizer(levelObj)));
     </script>
   </body>
 </html>
