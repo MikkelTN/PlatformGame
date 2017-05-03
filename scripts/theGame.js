@@ -23,7 +23,7 @@ const levelObj = {
   "                 V x",
   "                gggg",
   "                dddd",
-  "            = g dddd",
+  "           =  g dddd",
   "gggggggggg gggd|dddd",
   "dddddddddd|ddddwdddd",
   "ddddddddddwddddddddd"
@@ -49,7 +49,7 @@ const levelObj = {
   "               o    ",
   "                    ",
   "         ggg        ",
-  "         ddd        ",
+  "                    ",
   "ggggggg        ggggg",
   "ddddddd |      ddddd",
   "dddddddwwwwwwwwddddd"
@@ -72,9 +72,9 @@ const levelObj = {
   "          o         ",
   "                    ",
   "                    ",
-  "      gg    gg      ",
-  "      ddwwwwdd      ",
-  "ggg   dddddddd   ggg",
+  "      dddddddd      ",
+  "                    ",
+  "ggg              ggg",
   "ddd |          | ddd",
   "dddwwwwwwwwwwwwwwddd"
   ], [
@@ -84,7 +84,7 @@ const levelObj = {
   "               o    ",
   "                    ",
   "        d   d       ",
-  "    d       =       ",
+  "    d               ",
   "                    ",
   "ggggggggggggggg gggg",
   "ddddddddddddddd|dddd",
@@ -146,6 +146,7 @@ function Level(plan) {
   this.status = this.finishDelay = null;
 
   this.isFinished = () => this.status != null && this.finishDelay < 0;
+  console.log(this.grid);
 }
 
 //The physics engine!
@@ -198,14 +199,29 @@ Level.prototype.playerTouched = function(type, elm) {
   }
 };
 
-//Animation of the level
+//Check if elements are inside the active range
+Level.prototype.isActive = function(elm) {
+  if(elm.type == 'player' ||
+     elm.type == 'floater' ||
+    (elm.pos.x > this.player.pos.x - 5 &&
+     elm.pos.x < this.player.pos.x + 25)) {
+    return true;
+  }
+  return false;
+};
+
+//Animate the active elements
 Level.prototype.animate = function(step, keys) {
   if(this.status != null) {
     this.finishDelay -= step;
   }
   while (step > 0) {
     const thisStep = Math.min(step, 0.05);
-    this.elements.forEach(elm => elm.act(thisStep, this, keys), this);
+    this.elements.forEach(elm => {
+      if(this.isActive(elm)) {
+        elm.act(thisStep, this, keys), this;
+      }
+    });
     step -= thisStep;
   }
 };
@@ -218,11 +234,11 @@ function Vector(x, y) {
 
 Vector.prototype.plus = function(other) {
   return new Vector(this.x + other.x, this.y + other.y);
-}
+};
 
 Vector.prototype.times = function(factor) {
   return new Vector(this.x * factor, this.y * factor);
-}
+};
 
 //The elements are constructed from their ch in the leveldrawing
 const elementChars = {
@@ -294,7 +310,7 @@ function Floater(pos, ch) {
   this.type = 'floater';
   this.pos = pos.plus(new Vector(0.1, 0.2));
   this.size = new Vector(0.8, 0.8);
-  this.speed = new Vector(Math.random() * 3 + 2, 0);
+  this.speed = new Vector(Math.random() * 3 + 3, 0);
 };
 
 Floater.prototype.act = function(step, level) {
@@ -397,17 +413,19 @@ Display.prototype.drawBackground = function() {
 Display.prototype.drawElements = function() {
   const wrap = insElm('div');
   this.level.elements.forEach(elm => {
-    const rect = wrap.appendChild(insElm('div', 'element ' + elm.type));
-    rect.style.width = elm.size.x * scale + 'px';
-    rect.style.height = elm.size.y * scale + 'px';
-    rect.style.left = elm.pos.x * scale + 'px';
-    rect.style.top = elm.pos.y * scale + 'px';
-    if(elm.type == 'victory') {
-      rect.style.borderLeft = scale / 2 +'px solid transparent';
-      rect.style.borderRight = scale / 2 + 'px solid transparent';
-      rect.style.borderTop = scale + 'px solid rgb(241, 229, 89)';
-    } else if (elm.type == 'coin') {
-      rect.style.borderRadius = scale / 2 + 'px';
+    if(this.level.isActive(elm)) {
+      const rect = wrap.appendChild(insElm('div', 'element ' + elm.type));
+      rect.style.width = elm.size.x * scale + 'px';
+      rect.style.height = elm.size.y * scale + 'px';
+      rect.style.left = elm.pos.x * scale + 'px';
+      rect.style.top = elm.pos.y * scale + 'px';
+      if(elm.type == 'victory') {
+        rect.style.borderLeft = scale / 2 +'px solid transparent';
+        rect.style.borderRight = scale / 2 + 'px solid transparent';
+        rect.style.borderTop = scale + 'px solid rgb(241, 229, 89)';
+      } else if (elm.type == 'coin') {
+        rect.style.borderRadius = scale / 2 + 'px';
+      }
     }
   });
   return wrap;
@@ -494,7 +512,7 @@ const controls = action();
 //Given a levelplan object, the randomizer will start at start plan, end at end plan and randomize the rest.
 const levelRandomizer = levelPlan => {
   let randomLevel = levelPlan.start.slice(0);
-  for(let i = 0; i < 7; i++) {
+  for(let i = 0; i < 10; i++) {
     const randomPlan = Math.round(Math.random() * (levelPlan.plains.length - 1));
     for(let j = 0; j < randomLevel.length; j++)
       randomLevel[j] = randomLevel[j].concat(levelPlan.plains[randomPlan][j]);
