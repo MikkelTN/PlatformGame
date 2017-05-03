@@ -146,7 +146,6 @@ function Level(plan) {
   this.status = this.finishDelay = null;
 
   this.isFinished = () => this.status != null && this.finishDelay < 0;
-  console.log(this.grid);
 }
 
 //The physics engine!
@@ -201,10 +200,12 @@ Level.prototype.playerTouched = function(type, elm) {
 
 //Check if elements are inside the active range
 Level.prototype.isActive = function(elm) {
+  const right = this.player.pos.x + document.body.clientWidth / scale,
+        left = right / 5;
+
   if(elm.type == 'player' ||
      elm.type == 'floater' ||
-    (elm.pos.x > this.player.pos.x - 5 &&
-     elm.pos.x < this.player.pos.x + 25)) {
+    (elm.pos.x > left && elm.pos.x < right)) {
     return true;
   }
   return false;

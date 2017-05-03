@@ -6,8 +6,9 @@ html {
 
 body {
 	background: rgb(51, 51, 51);
-	padding: 0;
 	margin: 0;
+	padding: 0;
+  width: 100%;
 }
 h1 {
 	color: rgb(174, 198, 207);
