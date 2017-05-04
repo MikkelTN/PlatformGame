@@ -6,7 +6,11 @@
   	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
     
     <!-- The actual game -->
-    <script type="text/javascript" src="scripts/theGame.js"></script>
+    <script type="text/javascript" src="scripts/game/gameActions.js"></script>
+    <script type="text/javascript" src="scripts/game/gameBuild.js"></script>
+    <script type="text/javascript" src="scripts/game/gameDraw.js"></script>
+    <script type="text/javascript" src="scripts/game/gameElements.js"></script>
+    <script type="text/javascript" src="scripts/game/gameRun.js"></script>
 
     <script type="text/javascript" src="scripts/fadeControls.js"></script>
   </head>
@@ -25,7 +29,7 @@
       </div>
     </div>
   	<script>
-      runGame(new Level(levelRandomizer(levelObj)));
+      runGame(gamePlan);
     </script>
   </body>
 </html>
