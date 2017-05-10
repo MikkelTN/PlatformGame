@@ -30,9 +30,15 @@ const levelRandomizer = levelPlan => {
 const controls = action();
 
 const runGame = () => {
-  const level = new Level(levelRandomizer(gamePlan)),
-        display = new Display(document.body, level);
+  const level = new Level(levelRandomizer(gamePlan));
+  let display = new Display(document.body, level);
+  
   runAnimation(step => {
+    if (level.scale !== Math.round(window.innerHeight / (level.height + 2))) {
+      display.wrap.parentNode.removeChild(display.wrap);
+      level.scale = Math.round(window.innerHeight / (level.height + 2));
+      display = new Display(document.body, level);
+    }
     level.animate(step, controls);
     display.drawFrame();
     if(level.isFinished()) {
