@@ -33,15 +33,12 @@ function Display(parent, level) {
   this.drawFrame();
 }
 
-//Scale is set manually
-const scale = 40;
-
 Display.prototype.drawBackground = function() {
   const table = insElm("table", "background");
-  table.style.width = this.level.width * scale + "px";
+  table.style.width = this.level.width * this.level.scale + "px";
   this.level.grid.forEach(row => {
     const rowElt = table.appendChild(insElm("tr"));
-    rowElt.style.height = scale + "px";
+    rowElt.style.height = this.level.scale + "px";
     row.forEach(type => {
       rowElt.appendChild(insElm("td", type));
     });
@@ -54,16 +51,16 @@ Display.prototype.drawElements = function() {
   this.level.elements.forEach(elm => {
     if(this.level.isActive(elm)) {
       const rect = wrap.appendChild(insElm('div', 'element ' + elm.type));
-      rect.style.width = elm.size.x * scale + 'px';
-      rect.style.height = elm.size.y * scale + 'px';
-      rect.style.left = elm.pos.x * scale + 'px';
-      rect.style.top = elm.pos.y * scale + 'px';
+      rect.style.width = elm.size.x * this.level.scale + 'px';
+      rect.style.height = elm.size.y * this.level.scale + 'px';
+      rect.style.left = elm.pos.x * this.level.scale + 'px';
+      rect.style.top = elm.pos.y * this.level.scale + 'px';
       if(elm.type == 'victory') {
-        rect.style.borderLeft = scale / 2 +'px solid transparent';
-        rect.style.borderRight = scale / 2 + 'px solid transparent';
-        rect.style.borderTop = scale + 'px solid rgb(241, 229, 89)';
+        rect.style.borderLeft = this.level.scale / 2 +'px solid transparent';
+        rect.style.borderRight = this.level.scale / 2 + 'px solid transparent';
+        rect.style.borderTop = this.level.scale + 'px solid rgb(241, 229, 89)';
       } else if (elm.type == 'coin') {
-        rect.style.borderRadius = scale / 2 + 'px';
+        rect.style.borderRadius = this.level.scale / 2 + 'px';
       }
     }
   });
@@ -84,8 +81,7 @@ Display.prototype.scrollPlayerIntoView = function() {
         margin = width / 6,
         left = this.wrap.scrollLeft,
         player = this.level.player,
-        center = player.pos.plus(player.size.times(0.5)).times(scale);
-
+        center = player.pos.plus(player.size.times(0.5)).times(this.level.scale);
   if(center.x > left + margin) {
     this.wrap.scrollLeft = center.x - margin;
   }

@@ -2,10 +2,10 @@
 function Level(plan) {
   this.width = plan[0].length;
   this.height = plan.length;
+  this.scale = Math.round(window.innerHeight / (this.height + 2));
   this.grid = [];
   this.elements = [];
   this.coins = 0;
-  console.log(this.width);
   
   for(let y = 0; y < this.height; y++) {
     const line = plan[y],
@@ -95,7 +95,7 @@ Level.prototype.playerTouched = function(type, elm) {
 
 //Check if elements are inside the active range
 Level.prototype.isActive = function(elm) {
-  const right = this.player.pos.x + document.body.clientWidth / scale,
+  const right = this.player.pos.x + document.body.clientWidth / this.scale,
         left = right / 5;
 
   if(elm.type == 'player' ||

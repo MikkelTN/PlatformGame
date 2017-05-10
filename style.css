@@ -8,7 +8,6 @@ body {
 	background: rgb(51, 51, 51);
 	margin: 0;
 	padding: 0;
-  width: 100%;
 }
 h1 {
 	color: rgb(174, 198, 207);
@@ -36,7 +35,7 @@ h1 {
 }
 .controls h2 {
 	font-size: 2rem;
-	margin-top: 15rem;
+	margin-top: 45vh;
 }
 .controls div {
 	background-color: rgba(0, 0, 0, 0.5);
@@ -51,10 +50,8 @@ h1 {
 	float: right;
 }
 .game {
-  height: 100vh;
   overflow: hidden;
   position: relative;
-  width: 100%;
 }
 .background {
 	background: lightblue;
@@ -83,7 +80,7 @@ h1 {
   background: rgb(87, 59, 12);
 }
 
-/** Styling the actors **/
+/** Styling the elements **/
 .element {
 	position: absolute;
 }
