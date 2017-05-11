@@ -33,9 +33,7 @@ const runGame = controls => {
   
   runAnimation(step => {
     if (level.scale !== Math.round(window.innerHeight / (level.height * 1.2))) {
-      if (!display) {
-        display.wrap.parentNode.removeChild(display.wrap);
-      }
+      display.wrap.parentNode.removeChild(display.wrap);
       level.scale = Math.round(window.innerHeight / (level.height * 1.2));
       display = new Display(document.body, level);
     }
