@@ -37,17 +37,12 @@ Player.prototype.jump = function(step, level, keys) {
         obstacle = level.obstacleAt(newPos, this.size);
 
   if(obstacle) {
-    this.double = false;
     level.playerTouched(obstacle);
-    if(keys.up) {
+    if(keys.up && this.speed.y > 0) {
       this.speed.y = -jumpSpeed;
-      this.double = true;
     } else {
       this.speed.y = 0;
     }
-  } else if(keys.up && this.double) {
-      this.speed.y = -jumpSpeed;
-      this.double = false;
   } else {
     this.pos = newPos;
   }
