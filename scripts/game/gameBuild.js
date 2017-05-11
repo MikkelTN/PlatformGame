@@ -2,7 +2,7 @@
 function Level(plan) {
   this.width = plan[0].length;
   this.height = plan.length;
-  this.scale = Math.round(window.innerHeight / (this.height + 2));
+  this.scale = Math.round(window.innerHeight / (this.height * 1.2));
   this.grid = [];
   this.elements = [];
   this.coins = 0;
@@ -95,9 +95,8 @@ Level.prototype.playerTouched = function(type, elm) {
 
 //Check if elements are inside the active range
 Level.prototype.isActive = function(elm) {
-  const right = this.player.pos.x + document.body.clientWidth / this.scale,
-        left = right / 5;
-
+  const right = this.player.pos.x + this.width * 0.8,
+        left = this.player.pos.x - this.width * 0.2;
   if(elm.type == 'player' ||
      elm.type == 'floater' ||
     (elm.pos.x > left && elm.pos.x < right)) {

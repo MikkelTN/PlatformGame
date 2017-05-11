@@ -27,16 +27,16 @@ const levelRandomizer = levelPlan => {
   return randomLevel;
 };
 
-const controls = action();
-
-const runGame = () => {
+const runGame = controls => {
   const level = new Level(levelRandomizer(gamePlan));
   let display = new Display(document.body, level);
   
   runAnimation(step => {
-    if (level.scale !== Math.round(window.innerHeight / (level.height + 2))) {
-      display.wrap.parentNode.removeChild(display.wrap);
-      level.scale = Math.round(window.innerHeight / (level.height + 2));
+    if (level.scale !== Math.round(window.innerHeight / (level.height * 1.2))) {
+      if (!display) {
+        display.wrap.parentNode.removeChild(display.wrap);
+      }
+      level.scale = Math.round(window.innerHeight / (level.height * 1.2));
       display = new Display(document.body, level);
     }
     level.animate(step, controls);
@@ -47,7 +47,7 @@ const runGame = () => {
       }
       display.wrap.parentNode.removeChild(display.wrap);
       if(level.status == 'lost') {
-        runGame();
+        runGame(controls);
       }
       else {
         document.body.appendChild(insElm('h1', 'winmsg', 'You finished the level, and you collected ' +
